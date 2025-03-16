@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,17 +10,60 @@ import WeeklyReportComponent from "./WeeklyReportComponent";
 
 export default function ContentListPage() {
   const [activeTab, setActiveTab] = useState("news"); // "news", "market-condition", or "weekly-report"
+  const [dbSizeMB, setDbSizeMB] = useState<string | null>(null);
+  const [dbSizeGB, setDbSizeGB] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Fetch database size when component mounts
+    const fetchDbSize = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch("/api/db-size");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch database size");
+        }
+
+        const data = await response.json();
+        setDbSizeMB(data.totalSizeMB);
+        setDbSizeGB(data.totalSizeGB);
+      } catch (err) {
+        console.error("Error fetching DB size:", err);
+        setError("데이터베이스 크기를 불러오는데 실패했습니다.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDbSize();
+  }, []);
 
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">
-          {activeTab === "news"
-            ? "뉴스 목록"
-            : activeTab === "market-condition"
-            ? "시황 목록"
-            : "주간 레포트 목록"}
-        </h1>
+        <div>
+          <h1 className="text-3xl font-bold">
+            {activeTab === "news"
+              ? "뉴스 목록"
+              : activeTab === "market-condition"
+              ? "시황 목록"
+              : "주간 레포트 목록"}
+          </h1>
+
+          {/* Display database size */}
+          <div className="text-sm text-gray-500 mt-1">
+            {isLoading ? (
+              "데이터베이스 크기 로딩 중..."
+            ) : error ? (
+              <span className="text-red-500">{error}</span>
+            ) : (
+              `데이터베이스 크기: ${dbSizeMB} MB (${dbSizeGB} GB)`
+            )}
+          </div>
+        </div>
+
         {activeTab !== "weekly-report" && (
           <Link href="/admin/add">
             <Button>
