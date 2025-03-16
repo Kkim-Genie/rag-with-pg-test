@@ -1,9 +1,17 @@
 // lib/types.ts
-export interface Resource {
+export interface News {
   id: string;
   title: string;
   link?: string | null;
   date?: string | null;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MarketCondition {
+  id: string;
+  date: string;
   content: string;
   createdAt: string;
   updatedAt: string;

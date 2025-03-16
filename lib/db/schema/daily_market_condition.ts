@@ -5,12 +5,10 @@ import { z } from "zod";
 
 import { nanoid } from "@/lib/utils";
 
-export const resources = pgTable("resources", {
+export const dailyMarketCondition = pgTable("daily_market_condition", {
   id: varchar("id", { length: 191 })
     .primaryKey()
     .$defaultFn(() => nanoid()),
-  title: text("title").notNull(),
-  link: text("link"),
   date: text("date"),
   content: text("content").notNull(),
 
@@ -22,8 +20,9 @@ export const resources = pgTable("resources", {
     .default(sql`now()`),
 });
 
-// Schema for resources - used to validate API requests
-export const insertResourceSchema = createSelectSchema(resources)
+export const insertMarketConditonSchema = createSelectSchema(
+  dailyMarketCondition
+)
   .extend({})
   .omit({
     id: true,
@@ -31,5 +30,6 @@ export const insertResourceSchema = createSelectSchema(resources)
     updatedAt: true,
   });
 
-// Type for resources - used to type API request params and within Components
-export type NewResourceParams = z.infer<typeof insertResourceSchema>;
+export type NewMarketConditionParams = z.infer<
+  typeof insertMarketConditonSchema
+>;

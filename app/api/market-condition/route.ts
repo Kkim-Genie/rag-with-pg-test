@@ -1,14 +1,15 @@
-// app/api/news/add/route.ts
-import { NextResponse } from "next/server";
+import { createMarketCondition } from "@/lib/actions/daily_market_condition";
 import { db } from "@/lib/db";
-import { ZodError } from "zod";
-import { CreateNews } from "@/lib/actions/news";
-import { news } from "@/lib/db/schema/news";
+import { dailyMarketCondition } from "@/lib/db/schema/daily_market_condition";
 import { desc } from "drizzle-orm";
+import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const allNews = await db.select().from(news).orderBy(desc(news.createdAt));
+    const allNews = await db
+      .select()
+      .from(dailyMarketCondition)
+      .orderBy(desc(dailyMarketCondition.createdAt));
     return NextResponse.json(allNews);
   } catch (error) {
     console.error("Error fetching resources:", error);
@@ -22,24 +23,15 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     // 요청 본문 파싱
-    const rows: {
-      date: string;
-      title: string;
-      link: string;
-      content: string;
-    }[] = await req.json();
+    const rows: { date: string; content: string }[] = await req.json();
 
-    const promises = rows.map(async (row, index) => {
-      const { date, title, link, content } = row;
-      return await CreateNews({
+    for (const row of rows) {
+      const { date, content } = row;
+      const msg = await createMarketCondition({
         date,
-        title,
-        link,
         content,
       });
-    });
-
-    const results = await Promise.all(promises);
+    }
     // 성공 응답
     return NextResponse.json(
       {

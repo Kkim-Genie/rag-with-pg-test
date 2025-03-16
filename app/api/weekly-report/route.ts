@@ -1,15 +1,17 @@
 // app/api/news/add/route.ts
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { ZodError } from "zod";
-import { CreateNews } from "@/lib/actions/news";
-import { news } from "@/lib/db/schema/news";
 import { desc } from "drizzle-orm";
+import { weeklyReport } from "@/lib/db/schema/weekly_report";
+import { CreateWeeklyReport } from "@/lib/actions/weekly_report";
 
 export async function GET() {
   try {
-    const allNews = await db.select().from(news).orderBy(desc(news.createdAt));
-    return NextResponse.json(allNews);
+    const reports = await db
+      .select()
+      .from(weeklyReport)
+      .orderBy(desc(weeklyReport.created_at));
+    return NextResponse.json(reports);
   } catch (error) {
     console.error("Error fetching resources:", error);
     return NextResponse.json(
@@ -22,24 +24,24 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     // 요청 본문 파싱
-    const rows: {
-      date: string;
-      title: string;
-      link: string;
+    const data: {
+      start_date: string;
+      end_date: string;
       content: string;
-    }[] = await req.json();
+      market_analysis_ids: string[];
+      news_ids: string[];
+    } = await req.json();
+    const { start_date, end_date, content, market_analysis_ids, news_ids } =
+      data;
 
-    const promises = rows.map(async (row, index) => {
-      const { date, title, link, content } = row;
-      return await CreateNews({
-        date,
-        title,
-        link,
-        content,
-      });
+    await CreateWeeklyReport({
+      start_date,
+      end_date,
+      content,
+      market_analysis_ids,
+      news_ids,
     });
 
-    const results = await Promise.all(promises);
     // 성공 응답
     return NextResponse.json(
       {
@@ -49,7 +51,7 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("시황 등록 오류:", error);
+    console.error("위클리 보고서 등록 오류:", error);
 
     return NextResponse.json(
       {

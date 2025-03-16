@@ -16,9 +16,10 @@ const generateChunks = (input: string): string[] => {
 };
 
 export const generateEmbeddings = async (
-  value: string
+  value: string,
+  useChunk: boolean = true
 ): Promise<Array<{ embedding: number[]; content: string }>> => {
-  const chunks = generateChunks(value);
+  const chunks = useChunk ? generateChunks(value) : [value];
   const { embeddings } = await embedMany({
     model: embeddingModel,
     values: chunks,
