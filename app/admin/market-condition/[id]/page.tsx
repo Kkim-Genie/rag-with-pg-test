@@ -50,7 +50,7 @@ export default function ResourceDetailPage() {
     }
 
     try {
-      const response = await fetch(`/api/news/${resourceId}`, {
+      const response = await fetch(`/api/market-condition/${resourceId}`, {
         method: "DELETE",
       });
 

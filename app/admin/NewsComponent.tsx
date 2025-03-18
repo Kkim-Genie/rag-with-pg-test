@@ -10,6 +10,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface NewsComponentProps {
   isActive: boolean;
@@ -19,6 +26,7 @@ export default function NewsComponent({ isActive }: NewsComponentProps) {
   const [news, setNews] = useState<News[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCompany, setSelectedCompany] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -41,12 +49,29 @@ export default function NewsComponent({ isActive }: NewsComponentProps) {
     }
   };
 
-  // 검색어를 기반으로 뉴스 필터링
-  const filteredNews = news.filter(
-    (newsItem) =>
-      newsItem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      newsItem.company?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // 뉴스 데이터에서 중복 없이 회사 목록 추출
+  const getUniqueCompanies = useCallback(() => {
+    const companies = news
+      .map((item) => item.company || "일반")
+      .filter((value, index, self) => self.indexOf(value) === index)
+      .sort();
+    return ["전체", ...companies];
+  }, [news]);
+
+  // 검색어와 선택된 회사를 기반으로 뉴스 필터링
+  const filteredNews = news.filter((newsItem) => {
+    const titleMatch = newsItem.title
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+
+    const companyMatch =
+      selectedCompany === "" ||
+      selectedCompany === "전체" ||
+      (selectedCompany === "일반" && !newsItem.company) ||
+      newsItem.company?.toLowerCase() === selectedCompany.toLowerCase();
+
+    return titleMatch && companyMatch;
+  });
 
   // 페이지네이션을 위한 계산
   const totalPages = Math.ceil(filteredNews.length / itemsPerPage);
@@ -58,6 +83,11 @@ export default function NewsComponent({ isActive }: NewsComponentProps) {
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
   };
+
+  // 필터 변경 시 첫 페이지로 리셋
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCompany]);
 
   // 표시할 페이지 버튼 계산
   const getPageNumbers = useCallback(() => {
@@ -125,13 +155,25 @@ export default function NewsComponent({ isActive }: NewsComponentProps) {
 
   return (
     <div style={{ display: isActive ? "block" : "none" }}>
-      <div className="mb-6">
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
         <Input
           placeholder="제목으로 검색..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-md"
         />
+        <Select value={selectedCompany} onValueChange={setSelectedCompany}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="회사 선택" />
+          </SelectTrigger>
+          <SelectContent>
+            {getUniqueCompanies().map((company) => (
+              <SelectItem key={company} value={company}>
+                {company}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {loading ? (
@@ -152,7 +194,7 @@ export default function NewsComponent({ isActive }: NewsComponentProps) {
                         </CardHeader>
                         <CardContent>
                           <p className="text-md font-semibold line-clamp-3">
-                            {newsItem.company}
+                            {newsItem.company || "일반"}
                           </p>
                           <p className="text-sm text-gray-500 line-clamp-3">
                             {newsItem.content}
