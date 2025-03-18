@@ -7,6 +7,7 @@ export default function Chat() {
   const { messages, input, handleInputChange, handleSubmit } = useChat({
     maxSteps: 3,
   });
+  console.log(messages);
 
   // Function to process content and convert <link></link> tags to clickable links
   const processContent = (content: string) => {
