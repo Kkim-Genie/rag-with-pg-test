@@ -5,6 +5,7 @@ export interface News {
   link?: string | null;
   date?: string | null;
   content: string;
+  company: string | null;
   createdAt: string;
   updatedAt: string;
 }

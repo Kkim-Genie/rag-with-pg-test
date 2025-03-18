@@ -5,14 +5,17 @@ import { insertNewsSchema, NewNewsParams, news } from "../db/schema/news";
 
 export const CreateNews = async (input: NewNewsParams) => {
   try {
-    const { date, title, link, content } = insertNewsSchema.parse(input);
+    const { date, title, link, content, company } =
+      insertNewsSchema.parse(input);
 
     const [newNews] = await db
       .insert(news)
-      .values({ date, title, link, content })
+      .values({ date, title, link, content, company })
       .returning();
 
-    const mergedContent = `title:${title}\nlink:${link}\ndate:${date}\ncontent:${content}`;
+    const mergedContent = `title:${title}\nlink:${link}\ndate:${date}\n${
+      company ? `company name:${company}\n` : ""
+    }content:${content}`;
 
     const embeddings = await generateEmbeddings(mergedContent, false);
     await db.insert(embeddingsTable).values(

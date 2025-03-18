@@ -42,8 +42,10 @@ export default function NewsComponent({ isActive }: NewsComponentProps) {
   };
 
   // 검색어를 기반으로 뉴스 필터링
-  const filteredNews = news.filter((newsItem) =>
-    newsItem.title.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredNews = news.filter(
+    (newsItem) =>
+      newsItem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      newsItem.company?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // 페이지네이션을 위한 계산
@@ -149,6 +151,9 @@ export default function NewsComponent({ isActive }: NewsComponentProps) {
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
+                          <p className="text-md font-semibold line-clamp-3">
+                            {newsItem.company}
+                          </p>
                           <p className="text-sm text-gray-500 line-clamp-3">
                             {newsItem.content}
                           </p>

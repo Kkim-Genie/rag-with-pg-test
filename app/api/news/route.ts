@@ -27,15 +27,17 @@ export async function POST(req: Request) {
       title: string;
       link: string;
       content: string;
+      company: string | undefined;
     }[] = await req.json();
 
     const promises = rows.map(async (row, index) => {
-      const { date, title, link, content } = row;
+      const { date, title, link, content, company } = row;
       return await CreateNews({
         date,
         title,
         link,
         content,
+        company: company ?? null,
       });
     });
 

@@ -13,6 +13,7 @@ export const news = pgTable("news", {
   link: text("link"),
   date: text("date"),
   content: text("content").notNull(),
+  company: text("company"),
 
   createdAt: timestamp("created_at")
     .notNull()

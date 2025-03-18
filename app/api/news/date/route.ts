@@ -8,12 +8,25 @@ export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const date = url.searchParams.get("date") ?? "";
+    const company = url.searchParams.get("date") ?? null;
 
+    const conditions = [];
+
+    if (date) {
+      conditions.push(eq(news.date, date));
+    }
+
+    if (company) {
+      conditions.push(eq(news.company, company));
+    }
+
+    // Create the query with all applicable conditions
     const allNews = await db
       .select()
       .from(news)
-      .where(eq(news.date, date))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(news.createdAt));
+
     return NextResponse.json(allNews);
   } catch (error) {
     console.error("Error fetching resources:", error);

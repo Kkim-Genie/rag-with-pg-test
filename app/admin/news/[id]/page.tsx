@@ -123,6 +123,12 @@ export default function ResourceDetailPage() {
               </div>
             )}
             <div>
+              <h3 className="text-sm font-medium">회사명</h3>
+              <div className="mt-2 whitespace-pre-wrap">
+                {resource.company ?? "X"}
+              </div>
+            </div>
+            <div>
               <h3 className="text-sm font-medium">내용</h3>
               <div className="mt-2 whitespace-pre-wrap">{resource.content}</div>
             </div>
