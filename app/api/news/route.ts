@@ -42,11 +42,19 @@ export async function POST(req: Request) {
     });
 
     const results = await Promise.all(promises);
+    const successCount = results.filter(
+      (item) => item === "News successfully created and embedded."
+    ).length;
+    const existCount = results.filter(
+      (item) => item === "similar content already exist"
+    ).length;
     // 성공 응답
     return NextResponse.json(
       {
-        success: true,
-        // message: msg,
+        total: results.length,
+        success: successCount,
+        exist: existCount,
+        error: results.length - successCount - existCount,
       },
       { status: 201 }
     );

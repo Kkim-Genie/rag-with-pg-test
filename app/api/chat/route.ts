@@ -3,7 +3,7 @@ import { streamText, tool } from "ai";
 import { z } from "zod";
 import { findRelevantContent } from "@/lib/ai/embedding";
 import dayjs from "dayjs";
-import { searchNewsByDate } from "@/lib/ai/\bsearchNews";
+import { searchNewsByDate } from "@/lib/ai/searchNews";
 import { searchMarketConditionByDate } from "@/lib/ai/searchMarketCondition";
 
 // Allow streaming responses up to 30 seconds
