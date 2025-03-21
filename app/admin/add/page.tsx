@@ -1,6 +1,6 @@
 // pages/index.js
 "use client";
-import { useState } from "react";
+import { ChangeEvent, FormEvent, useState } from "react";
 import Head from "next/head";
 
 export default function NewsForm() {
@@ -14,7 +14,9 @@ export default function NewsForm() {
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
-  const handleChange = (e) => {
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -22,7 +24,7 @@ export default function NewsForm() {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     setMessage("");

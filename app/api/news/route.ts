@@ -48,12 +48,16 @@ export async function POST(req: Request) {
     const existCount = results.filter(
       (item) => item === "similar content already exist"
     ).length;
+    const existTitleCount = results.filter(
+      (item) => item === "similar title already exist"
+    ).length;
     // 성공 응답
     return NextResponse.json(
       {
         total: results.length,
         success: successCount,
         exist: existCount,
+        existTitle: existTitleCount,
         error: results.length - successCount - existCount,
       },
       { status: 201 }

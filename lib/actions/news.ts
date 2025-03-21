@@ -13,7 +13,23 @@ export const CreateNews = async (input: NewNewsParams) => {
       company ? `company name:${company}\n` : ""
     }content:${content}`;
 
+    const embededTitle = await generateEmbeddings(title, false);
     const embedded = await generateEmbeddings(mergedContent, false);
+
+    const titleSimilarity = sql<number>`1 - (${cosineDistance(
+      embeddingsTable.titleEmbedding,
+      embededTitle[0].embedding
+    )})`;
+    const similarTitles = await db
+      .select({ name: embeddingsTable.titleEmbedding, titleSimilarity })
+      .from(embeddingsTable)
+      .where(
+        and(gt(titleSimilarity, 0.7), eq(embeddingsTable.date, date ?? ""))
+      )
+      .orderBy((t) => desc(t.titleSimilarity));
+    if (similarTitles.length > 0) {
+      return "similar title already exist";
+    }
 
     const similarity = sql<number>`1 - (${cosineDistance(
       embeddingsTable.embedding,
@@ -35,6 +51,7 @@ export const CreateNews = async (input: NewNewsParams) => {
 
     await db.insert(embeddingsTable).values(
       embedded.map((embedding) => ({
+        titleEmbedding: embededTitle[0].embedding,
         date,
         originId: newNews.id,
         originType: "news",

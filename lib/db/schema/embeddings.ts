@@ -11,6 +11,7 @@ export const embeddings = pgTable(
     originId: varchar("origin_id", { length: 191 }).notNull(),
     originType: varchar("origin_type", { length: 50 }).notNull(), // 'daily_market_condition' 또는 'news'를 저장
     content: text("content").notNull(),
+    titleEmbedding: vector("title_embedding", { dimensions: 1536 }).notNull(),
     embedding: vector("embedding", { dimensions: 1536 }).notNull(),
   },
   (table) => ({

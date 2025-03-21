@@ -19,9 +19,13 @@ export const CreateWeeklyReport = async (input: NewWeeklyReportParams) => {
 
     const mergedContent = `title:${start_date}~${end_date} weekly report\ncontent:${content}`;
 
+    const embededTitle = await generateEmbeddings(
+      `${start_date}~${end_date} weekly report`
+    );
     const embeddings = await generateEmbeddings(mergedContent, false);
     await db.insert(embeddingsTable).values(
       embeddings.map((embedding) => ({
+        titleEmbedding: embededTitle[0].embedding,
         date: start_date,
         originId: newWeeklyReport.id,
         originType: "weekly_report",

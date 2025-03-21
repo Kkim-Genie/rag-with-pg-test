@@ -18,9 +18,11 @@ export const createMarketCondition = async (
       .values({ date, content })
       .returning();
 
+    const embededTitle = await generateEmbeddings(`${date} 시황`);
     const embeddings = await generateEmbeddings(content, false);
     await db.insert(embeddingsTable).values(
       embeddings.map((embedding) => ({
+        titleEmbedding: embededTitle[0].embedding,
         date,
         originId: marketCondition.id,
         originType: "daily_market_condition",
