@@ -7,5 +7,7 @@ export default {
   out: "./lib/db/migrations",
   dbCredentials: {
     url: env.DATABASE_URL,
-  }
+  },
+  schemaFilter: ["ai"],
+  strict: true,
 } satisfies Config;

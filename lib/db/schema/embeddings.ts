@@ -1,7 +1,8 @@
 import { nanoid } from "@/lib/utils";
-import { index, pgTable, text, varchar, vector } from "drizzle-orm/pg-core";
+import { index, pgSchema, text, varchar, vector } from "drizzle-orm/pg-core";
+import { aiSchema } from "..";
 
-export const embeddings = pgTable(
+export const embeddings = aiSchema.table(
   "embeddings",
   {
     id: varchar("id", { length: 191 })

@@ -1,11 +1,12 @@
 import { sql } from "drizzle-orm";
-import { text, varchar, timestamp, pgTable } from "drizzle-orm/pg-core";
+import { text, varchar, timestamp, pgSchema } from "drizzle-orm/pg-core";
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 import { nanoid } from "@/lib/utils";
+import { aiSchema } from "..";
 
-export const weeklyReport = pgTable("weekly_report", {
+export const weeklyReport = aiSchema.table("weekly_report", {
   id: varchar("id", { length: 191 })
     .primaryKey()
     .$defaultFn(() => nanoid()),

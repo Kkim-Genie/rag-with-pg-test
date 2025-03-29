@@ -1,0 +1,1 @@
+ALTER TABLE "ai"."news" ADD COLUMN "keywords" text[] NOT NULL;

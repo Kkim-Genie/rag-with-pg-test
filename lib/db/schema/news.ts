@@ -1,11 +1,12 @@
 import { sql } from "drizzle-orm";
-import { text, varchar, timestamp, pgTable } from "drizzle-orm/pg-core";
+import { text, varchar, timestamp, pgSchema } from "drizzle-orm/pg-core";
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 import { nanoid } from "@/lib/utils";
+import { aiSchema } from "..";
 
-export const news = pgTable("news", {
+export const news = aiSchema.table("news", {
   id: varchar("id", { length: 191 })
     .primaryKey()
     .$defaultFn(() => nanoid()),
@@ -14,6 +15,7 @@ export const news = pgTable("news", {
   date: text("date"),
   content: text("content").notNull(),
   company: text("company"),
+  keywords: text("keywords").array().notNull(),
 
   createdAt: timestamp("created_at")
     .notNull()
@@ -23,10 +25,18 @@ export const news = pgTable("news", {
     .default(sql`now()`),
 });
 
-export const insertNewsSchema = createSelectSchema(news).extend({}).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const insertNewsSchema = createSelectSchema(news)
+  .extend({})
+  .extend({
+    keywords: z.union([
+      z.string().array(),
+      z.string().transform((value) => [value]),
+    ]),
+  })
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  });
 
 export type NewNewsParams = z.infer<typeof insertNewsSchema>;

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { desc } from "drizzle-orm";
 import { weeklyReport } from "@/lib/db/schema/weekly_report";
 import { CreateWeeklyReport } from "@/lib/actions/weekly_report";
+import { z } from "zod";
 
 export async function GET() {
   try {
@@ -21,18 +22,51 @@ export async function GET() {
   }
 }
 
+const WeeklyReportSchema = z
+  .object({
+    start_date: z
+      .string()
+      .nonempty("시작 날짜는 필수 항목입니다")
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "날짜 형식은 YYYY-MM-DD 형식이어야 합니다"),
+    end_date: z
+      .string()
+      .nonempty("종료 날짜는 필수 항목입니다")
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "날짜 형식은 YYYY-MM-DD 형식이어야 합니다"),
+    content: z.string().nonempty("내용은 필수 항목입니다"),
+    market_analysis_ids: z
+      .array(z.string())
+      .nonempty("시장 분석 ID는 최소 하나 이상 필요합니다"),
+    news_ids: z
+      .array(z.string())
+      .nonempty("뉴스 ID는 최소 하나 이상 필요합니다"),
+  })
+  .refine((data) => new Date(data.start_date) <= new Date(data.end_date), {
+    message: "시작 날짜는 종료 날짜보다 이전이거나 같아야 합니다",
+    path: ["start_date"],
+  });
+
 export async function POST(req: Request) {
   try {
     // 요청 본문 파싱
-    const data: {
-      start_date: string;
-      end_date: string;
-      content: string;
-      market_analysis_ids: string[];
-      news_ids: string[];
-    } = await req.json();
+    const body = await req.json();
+
+    // Zod를 이용한 데이터 검증
+    const result = WeeklyReportSchema.safeParse(body);
+
+    if (!result.success) {
+      // 유효성 검사 실패 시 오류 응답
+      return NextResponse.json(
+        {
+          success: false,
+          message: "데이터 형식이 올바르지 않습니다",
+          errors: result.error.format(),
+        },
+        { status: 400 }
+      );
+    }
+
     const { start_date, end_date, content, market_analysis_ids, news_ids } =
-      data;
+      result.data;
 
     await CreateWeeklyReport({
       start_date,
@@ -48,7 +82,7 @@ export async function POST(req: Request) {
         success: true,
         // message: msg,
       },
-      { status: 201 }
+      { status: 200 }
     );
   } catch (error) {
     console.error("위클리 보고서 등록 오류:", error);

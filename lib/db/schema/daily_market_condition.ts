@@ -1,11 +1,18 @@
 import { sql } from "drizzle-orm";
-import { text, varchar, timestamp, pgTable } from "drizzle-orm/pg-core";
+import {
+  text,
+  varchar,
+  timestamp,
+  pgTable,
+  pgSchema,
+} from "drizzle-orm/pg-core";
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 import { nanoid } from "@/lib/utils";
+import { aiSchema } from "..";
 
-export const dailyMarketCondition = pgTable("daily_market_condition", {
+export const dailyMarketCondition = aiSchema.table("daily_market_condition", {
   id: varchar("id", { length: 191 })
     .primaryKey()
     .$defaultFn(() => nanoid()),

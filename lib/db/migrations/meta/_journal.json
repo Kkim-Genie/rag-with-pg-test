@@ -5,8 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1719997972944,
-      "tag": "0000_yielding_bloodaxe",
+      "when": 1743213970408,
+      "tag": "0000_bright_shard",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1743214391090,
+      "tag": "0001_premium_loners",
       "breakpoints": true
     }
   ]

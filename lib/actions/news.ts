@@ -6,16 +6,18 @@ import { insertNewsSchema, NewNewsParams, news } from "../db/schema/news";
 
 export const CreateNews = async (input: NewNewsParams) => {
   try {
-    const { date, title, link, content, company } =
+    const { date, title, link, content, company, keywords } =
       insertNewsSchema.parse(input);
 
     const mergedContent = `title:${title}\nlink:${link}\ndate:${date}\n${
       company ? `company name:${company}\n` : ""
     }content:${content}`;
+    //감성이 중립일 경우 필터링
 
     const embededTitle = await generateEmbeddings(title, false);
     const embedded = await generateEmbeddings(mergedContent, false);
 
+    //제목 기반 유사도 계산 후 필터링
     const titleSimilarity = sql<number>`1 - (${cosineDistance(
       embeddingsTable.titleEmbedding,
       embededTitle[0].embedding
@@ -31,6 +33,7 @@ export const CreateNews = async (input: NewNewsParams) => {
       return "similar title already exist";
     }
 
+    //내용 기반 유사도 계산 후 필터링
     const similarity = sql<number>`1 - (${cosineDistance(
       embeddingsTable.embedding,
       embedded[0].embedding
@@ -46,7 +49,7 @@ export const CreateNews = async (input: NewNewsParams) => {
 
     const [newNews] = await db
       .insert(news)
-      .values({ date, title, link, content, company })
+      .values({ date, title, link, content, company, keywords })
       .returning();
 
     await db.insert(embeddingsTable).values(
