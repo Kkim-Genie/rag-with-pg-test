@@ -7,8 +7,8 @@ import { chunk } from "llm-chunk";
 
 const embeddingModel = openai.embedding("text-embedding-ada-002");
 
-const generateChunks = (input: string): string[] => {
-  return chunk(input); // 청크 알고리즘 추후 이것저것 테스트할 필요 있어 보임
+const generateChunks = (input: string, overlap: number): string[] => {
+  return chunk(input, { overlap }); // 청크 알고리즘 추후 이것저것 테스트할 필요 있어 보임
   //   return input
   //     .trim()
   //     .split(".")
@@ -17,9 +17,10 @@ const generateChunks = (input: string): string[] => {
 
 export const generateEmbeddings = async (
   value: string,
-  useChunk: boolean = true
+  useChunk: boolean = true,
+  overlap: number = 0
 ): Promise<Array<{ embedding: number[]; content: string }>> => {
-  const chunks = useChunk ? generateChunks(value) : [value];
+  const chunks = useChunk ? generateChunks(value, overlap) : [value];
   const { embeddings } = await embedMany({
     model: embeddingModel,
     values: chunks,

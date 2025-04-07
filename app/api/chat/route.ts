@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   const { messages } = await req.json();
 
   const result = streamText({
-    model: openai("gpt-4o"),
+    model: openai("gpt-4o-mini"),
     messages,
     system: `오늘의 날짜:${dayjs().format("YYYY-MM-DD")}
     You are a helpful assistant. 

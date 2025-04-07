@@ -15,6 +15,13 @@
       "when": 1743214391090,
       "tag": "0001_premium_loners",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1744019923518,
+      "tag": "0002_useful_siren",
+      "breakpoints": true
     }
   ]
 }
