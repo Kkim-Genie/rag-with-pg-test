@@ -5,6 +5,7 @@ import { findRelevantContent } from "@/lib/ai/embedding";
 import dayjs from "dayjs";
 import { searchNewsByDate } from "@/lib/ai/searchNews";
 import { searchMarketConditionByDate } from "@/lib/ai/searchMarketCondition";
+import { searchFingooEmbeddings } from "@/lib/ai/searchFingooEmbeddings";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -70,6 +71,13 @@ export async function POST(req: Request) {
           question: z.string().describe("the users question"),
         }),
         execute: async ({ question }) => findRelevantContent(question),
+      }),
+      getFingooInformation: tool({
+        description: `fingoo(핀구)에 대한 정보 및 해당 서비스의 각종 기능과 관련된 질문에 대한 답변을 제공합니다`,
+        parameters: z.object({
+          question: z.string().describe("the users question"),
+        }),
+        execute: async ({ question }) => searchFingooEmbeddings(question),
       }),
     },
   });
