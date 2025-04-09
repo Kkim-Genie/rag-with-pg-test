@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const date = url.searchParams.get("date") ?? "";
-    const company = url.searchParams.get("date") ?? null;
+    const company = url.searchParams.get("company") ?? null;
 
     const conditions = [];
 
