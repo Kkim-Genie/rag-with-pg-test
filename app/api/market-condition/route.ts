@@ -9,7 +9,10 @@ export async function GET() {
     const allNews = await db
       .select()
       .from(dailyMarketCondition)
-      .orderBy(desc(dailyMarketCondition.createdAt));
+      .orderBy(
+        desc(dailyMarketCondition.date),
+        desc(dailyMarketCondition.createdAt)
+      );
     return NextResponse.json(allNews);
   } catch (error) {
     console.error("Error fetching resources:", error);

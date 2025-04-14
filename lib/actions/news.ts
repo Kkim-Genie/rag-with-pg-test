@@ -17,36 +17,6 @@ export const CreateNews = async (input: NewNewsParams) => {
     const embededTitle = await generateEmbeddings(title, false);
     const embedded = await generateEmbeddings(mergedContent, false);
 
-    //제목 기반 유사도 계산 후 필터링
-    const titleSimilarity = sql<number>`1 - (${cosineDistance(
-      embeddingsTable.titleEmbedding,
-      embededTitle[0].embedding
-    )})`;
-    const similarTitles = await db
-      .select({ name: embeddingsTable.titleEmbedding, titleSimilarity })
-      .from(embeddingsTable)
-      .where(
-        and(gt(titleSimilarity, 0.7), eq(embeddingsTable.date, date ?? ""))
-      )
-      .orderBy((t) => desc(t.titleSimilarity));
-    if (similarTitles.length > 0) {
-      return "similar title already exist";
-    }
-
-    //내용 기반 유사도 계산 후 필터링
-    const similarity = sql<number>`1 - (${cosineDistance(
-      embeddingsTable.embedding,
-      embedded[0].embedding
-    )})`;
-    const similarGuides = await db
-      .select({ name: embeddingsTable.content, similarity })
-      .from(embeddingsTable)
-      .where(and(gt(similarity, 0.7), eq(embeddingsTable.date, date ?? "")))
-      .orderBy((t) => desc(t.similarity));
-    if (similarGuides.length > 0) {
-      return "similar content already exist";
-    }
-
     const [newNews] = await db
       .insert(news)
       .values({ date, title, link, content, company, keywords })

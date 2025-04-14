@@ -1,17 +1,18 @@
 // app/api/news/add/route.ts
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { desc } from "drizzle-orm";
+import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { weeklyReport } from "@/lib/db/schema/weekly_report";
 import { CreateWeeklyReport } from "@/lib/actions/weekly_report";
 import { z } from "zod";
+import { embeddings } from "@/lib/db/schema/embeddings";
 
 export async function GET() {
   try {
     const reports = await db
       .select()
       .from(weeklyReport)
-      .orderBy(desc(weeklyReport.created_at));
+      .orderBy(desc(weeklyReport.start_date));
     return NextResponse.json(reports);
   } catch (error) {
     console.error("Error fetching resources:", error);
@@ -75,6 +76,21 @@ export async function POST(req: Request) {
       market_analysis_ids,
       news_ids,
     });
+
+    await db
+      .delete(embeddings)
+      .where(
+        and(
+          gte(
+            sql`TO_DATE(${embeddings.date}, 'YYYY-MM-DD')`,
+            sql`TO_DATE(${start_date}, 'YYYY-MM-DD')`
+          ),
+          lte(
+            sql`TO_DATE(${embeddings.date}, 'YYYY-MM-DD')`,
+            sql`TO_DATE(${end_date}, 'YYYY-MM-DD')`
+          )
+        )
+      );
 
     // 성공 응답
     return NextResponse.json(

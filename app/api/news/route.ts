@@ -8,7 +8,10 @@ import { desc } from "drizzle-orm";
 
 export async function GET() {
   try {
-    const allNews = await db.select().from(news).orderBy(desc(news.createdAt));
+    const allNews = await db
+      .select()
+      .from(news)
+      .orderBy(desc(news.date), desc(news.createdAt));
     return NextResponse.json(allNews);
   } catch (error) {
     console.error("Error fetching resources:", error);
@@ -71,22 +74,18 @@ export async function POST(req: Request) {
     const existCount = results.filter(
       (item) => item === "similar content already exist"
     ).length;
-    const existTitleCount = results.filter(
-      (item) => item === "similar title already exist"
-    ).length;
     // 성공 응답
     return NextResponse.json(
       {
         total: results.length,
         success: successCount,
         exist: existCount,
-        existTitle: existTitleCount,
-        error: results.length - successCount - existCount - existTitleCount,
+        error: results.length - successCount - existCount,
       },
       { status: 200 }
     );
   } catch (error) {
-    console.error("시황 등록 오류:", error);
+    console.error("뉴스 등록 오류:", error);
 
     return NextResponse.json(
       {

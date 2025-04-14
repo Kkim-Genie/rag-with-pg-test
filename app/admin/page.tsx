@@ -7,9 +7,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NewsComponent from "./NewsComponent";
 import MarketConditionComponent from "./MarketConditionComponent";
 import WeeklyReportComponent from "./WeeklyReportComponent";
+import FingooInfoComponent from "./FingooInfoComponent";
 
 export default function ContentListPage() {
-  const [activeTab, setActiveTab] = useState("news"); // "news", "market-condition", or "weekly-report"
+  const [activeTab, setActiveTab] = useState("news"); // "news", "market-condition", "weekly-report", or "pingu-info"
   const [dbSizeMB, setDbSizeMB] = useState<string | null>(null);
   const [dbSizeGB, setDbSizeGB] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -49,7 +50,9 @@ export default function ContentListPage() {
               ? "뉴스 목록"
               : activeTab === "market-condition"
               ? "시황 목록"
-              : "주간 레포트 목록"}
+              : activeTab === "weekly-report"
+              ? "주간 레포트 목록"
+              : "핀구 정보 관리"}
           </h1>
 
           {/* Display database size */}
@@ -64,7 +67,7 @@ export default function ContentListPage() {
           </div>
         </div>
 
-        {activeTab !== "weekly-report" && (
+        {activeTab !== "weekly-report" && activeTab !== "pingu-info" && (
           <Link href="/admin/add">
             <Button>
               {activeTab === "news" ? "새 뉴스 추가" : "새 시황 추가"}
@@ -78,10 +81,11 @@ export default function ContentListPage() {
         onValueChange={(value) => setActiveTab(value)}
         className="w-full mb-6"
       >
-        <TabsList className="grid w-full max-w-md grid-cols-3">
+        <TabsList className="grid w-full max-w-md grid-cols-4">
           <TabsTrigger value="news">뉴스</TabsTrigger>
           <TabsTrigger value="market-condition">시황</TabsTrigger>
           <TabsTrigger value="weekly-report">주간 레포트</TabsTrigger>
+          <TabsTrigger value="pingu-info">핀구정보관리</TabsTrigger>
         </TabsList>
         <TabsContent value="news">
           <NewsComponent isActive={activeTab === "news"} />
@@ -93,6 +97,9 @@ export default function ContentListPage() {
         </TabsContent>
         <TabsContent value="weekly-report">
           <WeeklyReportComponent isActive={activeTab === "weekly-report"} />
+        </TabsContent>
+        <TabsContent value="pingu-info">
+          <FingooInfoComponent isActive={activeTab === "pingu-info"} />
         </TabsContent>
       </Tabs>
     </div>
