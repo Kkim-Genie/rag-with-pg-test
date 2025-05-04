@@ -6,7 +6,6 @@ import { CreateFingooEmbeddings } from "@/lib/actions/fingoo_embeddings";
 
 export async function GET() {
   try {
-    console.log("check");
     const allFingooEmbeddings = await db
       .select()
       .from(fingooEmbeddings)
