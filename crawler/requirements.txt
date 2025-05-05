@@ -1,0 +1,10 @@
+requests
+beautifulsoup4
+pandas
+selenium
+webdriver_manager
+time
+os
+re
+openai
+datetime

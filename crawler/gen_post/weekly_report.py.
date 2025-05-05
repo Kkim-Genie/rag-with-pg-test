@@ -1,0 +1,130 @@
+'''
+전체 위클리 레포트 생성 및 supabase post 전체 코드입니다.
+실행 시, 기업별 위클리 레포트 및 전체 위클리 레포트 모두 한번에 생성 후 전체 위클리 레포트 post 하는 방식입니다.
+'''
+
+import requests
+import json
+from datetime import datetime, timedelta
+from openai import OpenAI
+from api.gen_post.gen_comp_weekly import generate_weekly_reports
+from api.get.get_market_condition import get_market_condition as fetch_market_condition
+from api.get.get_news import get_news as fetch_news
+
+API_URL = "http://localhost:3000/api/weekly-report"
+def cal_cost(prompt_tokens, completion_tokens):
+    input_price = 2.50 / 1_000_000
+    output_price = 10.00 / 1_000_000
+    return prompt_tokens * input_price + completion_tokens * output_price
+
+def get_market_condition(start_date, end_date):
+    market_data = []
+    current_date = start_date
+    while current_date <= end_date:
+        data = fetch_market_condition(current_date)
+        if data:
+            market_data.extend(data)
+        else:
+            print(f"❌ {current_date} 시장 데이터 가져오기 실패")
+        current_date += timedelta(days=1)
+    return market_data
+
+def get_news(start_date, end_date):
+    news_data = []
+    current_date = start_date
+    while current_date <= end_date:
+        data = fetch_news(current_date)
+        if data:
+            news_data.extend(data)
+        else:
+            print(f"❌ {current_date} 뉴스 데이터 가져오기 실패")
+        current_date += timedelta(days=1)
+    return news_data
+
+def get_full_context(start_date, end_date, market_data, news_data):
+    full_context = ""
+
+    if market_data:
+        full_context += "📌 시장 데이터 요약:\n"
+        for entry in market_data:
+            full_context += f"- {entry.get('content', '내용 없음')}\n"
+
+    if news_data:
+        full_context += "\n📌 뉴스 요약:\n"
+        for entry in news_data:
+            full_context += f"- {entry.get('content', '내용 없음')}\n"
+
+    return full_context.strip()
+
+def prompting(start_date, end_date, full_content):
+    return f"""
+    💡 역할: 당신은 금융 시장을 분석하는 전문가입니다. 제공된 데이터를 기반으로 객관적이고 명확한 방식으로 주간 증시 요약을 작성하세요.
+
+    📌 **주간 증시 요약**
+    다음의 데이터를 활용하여 "Fingoo 주간 증시 요약"을 작성하세요. 제공된 데이터는 {start_date} ~ {end_date} 기간 동안의 미국 증시 관련 뉴스 및 분석 자료입니다.
+
+    📌 **보고서 기간**: {start_date} ~ {end_date}
+
+    ...
+
+    ⚠ **반드시 주어진 데이터만을 사용하여 작성하세요. 추가적인 가정이나 창작은 하지 마세요.**  
+    ⚠ **정보의 정확성을 유지하며, 지나치게 극적인 표현은 피하세요.**  
+    ⚠ **정보의 출처를 절대 기입하지 마세요.**  
+
+    " ⚠ 본 Fingoo 주간 증시 레포트는 공신력 있는 자료를 기반으로 Fingoo AI 기술을 사용하여 생성되었습니다."를 마지막에 출력해 주세요.
+
+    위 포멧에 맞춰서 {start_date} ~ {end_date} 기간의 아래 `context` 데이터를 참고하여 주간 시황을 작성하세요.
+    context: {full_content}
+    """
+
+def generate_weekly_report(start_date, end_date):
+    # 1. 시황 및 뉴스 데이터 수집
+    market_data = get_market_condition(start_date, end_date)
+    news_data = get_news(start_date, end_date)
+
+    # 2. 전체 context 구성
+    full_context = get_full_context(start_date, end_date, market_data, news_data)
+
+    # 3. 기업별 리포트 추가
+    company_reports = generate_weekly_reports(start_date, end_date)
+    if company_reports:
+        full_context += "\n\n📌 기업별 주간 리포트:\n"
+        for company, report in company_reports.items():
+            full_context += f"\n🔹 {company} 주간 리포트:\n{report.strip()}\n"
+
+    # 4. GPT 프롬프트 생성 및 호출
+    prompt = prompting(start_date, end_date, full_context)
+    client = OpenAI(api_key="YOUR_OPENAI_API_KEY")
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": "당신은 주식 전문가입니다."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+
+    content = response.choices[0].message.content
+    cost = cal_cost(response.usage.prompt_tokens, response.usage.completion_tokens)
+    print(f"💸 위클리 리포트 생성 코스트: ${cost:.6f}")
+
+    # 5. 서버에 POST
+    item = {
+        "start_date": str(start_date),
+        "end_date": str(end_date),
+        "content": content,
+        "market_analysis_ids": [entry["id"] for entry in market_data if "id" in entry],
+        "news_ids": [entry["id"] for entry in news_data if "id" in entry],
+    }
+
+    res = requests.post(API_URL, json=item)
+    print(f"📡 POST 결과: {res.status_code}, {res.text}")
+
+    return content
+
+if __name__ == "__main__":
+    # ⏱️ 오늘 날짜 기준 주간 리포트 날짜 범위
+    end_date = datetime.strptime("2025-04-06", "%Y-%m-%d").date()
+    start_date = end_date - timedelta(days=6)
+
+    print(f"📅 {start_date} ~ {end_date} 위클리 리포트 생성 중...")
+    generate_weekly_report(start_date, end_date)
