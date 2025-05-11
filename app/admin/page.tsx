@@ -67,10 +67,22 @@ export default function ContentListPage() {
           </div>
         </div>
 
-        {activeTab !== "weekly-report" && activeTab !== "pingu-info" && (
-          <Link href="/admin/add">
+        {activeTab !== "pingu-info" && (
+          <Link
+            href={
+              activeTab === "news"
+                ? "/admin/add"
+                : activeTab === "market-condition"
+                ? "/admin/add/market-condition"
+                : "/admin/add/weekly-report"
+            }
+          >
             <Button>
-              {activeTab === "news" ? "새 뉴스 추가" : "새 시황 추가"}
+              {activeTab === "news"
+                ? "새 뉴스 추가"
+                : activeTab === "market-condition"
+                ? "새 시황 추가"
+                : "새 주간 레포트 추가"}
             </Button>
           </Link>
         )}

@@ -7,7 +7,7 @@ import {
   varchar,
   vector,
 } from "drizzle-orm/pg-core";
-import { aiSchema } from "..";
+import { aiSchema } from "../aiSchema";
 import { z } from "zod";
 import { sql } from "drizzle-orm";
 

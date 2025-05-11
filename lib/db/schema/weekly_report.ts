@@ -4,7 +4,7 @@ import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 import { nanoid } from "@/lib/utils";
-import { aiSchema } from "..";
+import { aiSchema } from "../aiSchema";
 
 export const weeklyReport = aiSchema.table("weekly_report", {
   id: varchar("id", { length: 191 })

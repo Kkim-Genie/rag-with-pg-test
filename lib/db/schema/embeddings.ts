@@ -1,6 +1,6 @@
 import { nanoid } from "@/lib/utils";
 import { index, pgSchema, text, varchar, vector } from "drizzle-orm/pg-core";
-import { aiSchema } from "..";
+import { aiSchema } from "../aiSchema";
 
 export const embeddings = aiSchema.table(
   "embeddings",
