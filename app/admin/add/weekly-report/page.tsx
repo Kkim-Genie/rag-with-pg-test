@@ -3,10 +3,11 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import Head from "next/head";
 import { Button } from "@/components/ui/button";
-import { News } from "@/lib/types";
+import { MarketCondition, News } from "@/lib/types";
 import { makeMarketConditionPrompt } from "@/lib/utils";
 import { generateMarketCondition } from "@/lib/actions/generateMarketCondition";
 import { readStreamableValue } from "ai/rsc";
+import { Loader2 } from "lucide-react";
 
 export default function AddWeeklyReport() {
   const [formData, setFormData] = useState({
@@ -16,44 +17,53 @@ export default function AddWeeklyReport() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const [contexts, setContexts] = useState<News[]>([]);
+  const [newsContexts, setNewsContexts] = useState<News[]>([]);
+  const [marketContexts, setMarketContexts] = useState<MarketCondition[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const fetchContexts = async () => {
     if (!formData.date) return;
 
     const selectedDate = new Date(formData.date);
-    const day = selectedDate.getDay(); // 0: 일, 1: 월, ..., 5: 금, 6: 토
-
     let datesToFetch: string[] = [];
 
-    if (day === 2 || day === 3 || day === 4 || day === 5) {
-      // 화(2), 수(3), 목(4), 금(5): 당일만
-      datesToFetch = [formData.date];
-    } else {
-      // 토(6), 일(0), 월(1): 지난 금요일부터 해당 요일까지
-      // 금요일 구하기
-      const temp = new Date(selectedDate);
-      // day가 0(일)~1(월)~6(토)일 때, 지난 금요일까지 며칠 전인지 계산
-      const diffToFriday = (day + 7 - 5) % 7;
-      temp.setDate(selectedDate.getDate() - diffToFriday);
-
-      // 금요일부터 선택한 날짜까지 배열 생성
-      let d = new Date(temp);
-      while (d <= selectedDate) {
-        datesToFetch.push(d.toISOString().slice(0, 10));
-        d.setDate(d.getDate() + 1);
-      }
+    // 선택된 날짜 포함, 이전 7일(총 8일)
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(selectedDate);
+      d.setDate(selectedDate.getDate() - i);
+      datesToFetch.push(d.toISOString().slice(0, 10));
     }
 
     // 여러 날짜의 데이터를 병렬로 fetch
-    const fetches = datesToFetch.map((date) =>
-      fetch(`/api/news/date?date=${date}`).then((res) => res.json())
-    );
-    const results = await Promise.all(fetches);
+    const fetches: Promise<News[]>[] = [];
+    const marketFetches: Promise<MarketCondition[]>[] = [];
 
-    // 결과 합치기 (필요에 따라 가공)
-    const contexts = results.flat();
-    setContexts(contexts);
+    datesToFetch.forEach((date) => {
+      fetches.push(
+        fetch(`/api/news/date?date=${date}&company=miraeasset`).then((res) =>
+          res.json()
+        )
+      );
+    });
+    datesToFetch.forEach((date) => {
+      fetches.push(
+        fetch(`/api/news/date?date=${date}&company=youtube_futuresnow`).then(
+          (res) => res.json()
+        )
+      );
+    });
+    datesToFetch.forEach((date) => {
+      marketFetches.push(
+        fetch(`/api//market-condition/date?date=${date}`).then((res) =>
+          res.json()
+        )
+      );
+    });
+
+    const news = await Promise.all(fetches);
+    const market = await Promise.all(marketFetches);
+    setNewsContexts(news.flat());
+    setMarketContexts(market.flat());
   };
 
   useEffect(() => {
@@ -114,13 +124,25 @@ export default function AddWeeklyReport() {
   };
 
   const handleMakeMarketCondition = async () => {
+    setIsGenerating(true);
     setFormData((prev) => ({ ...prev, content: "" }));
-    const prompt = makeMarketConditionPrompt(formData.date, contexts);
-    const { output } = await generateMarketCondition(prompt);
+    const prompt = makeMarketConditionPrompt(
+      formData.date,
+      newsContexts,
+      marketContexts
+    );
+    const { output, usage } = await generateMarketCondition(prompt);
 
     for await (const delta of readStreamableValue(output)) {
       setFormData((prev) => ({ ...prev, content: `${prev.content}${delta}` }));
     }
+
+    const usageData = await usage;
+    const cost =
+      (usageData.promptTokens * 0.4) / 1000000 +
+      (usageData.completionTokens * 1.6) / 1000000;
+    console.log(`Cost: ${cost} USD`);
+    setIsGenerating(false);
   };
 
   return (
@@ -144,7 +166,16 @@ export default function AddWeeklyReport() {
         </div>
       )}
 
-      <Button onClick={handleMakeMarketCondition}>주간 레포트 생성하기</Button>
+      <Button onClick={handleMakeMarketCondition} disabled={isGenerating}>
+        {isGenerating ? (
+          <>
+            <Loader2 className="animate-spin mr-2" />
+            생성 중...
+          </>
+        ) : (
+          "주간 레포트 생성하기"
+        )}
+      </Button>
       <form
         onSubmit={handleSubmit}
         className="space-y-6 bg-white p-6 rounded-lg shadow-md"
@@ -167,13 +198,18 @@ export default function AddWeeklyReport() {
           />
         </div>
 
-        {contexts.length > 0 && (
+        {newsContexts.length > 0 && (
           <div className="mb-4">
             <div className="text-sm font-semibold mb-1 text-gray-700">
               관련 뉴스 제목
             </div>
             <ul className="list-disc list-inside text-gray-800 max-h-48 overflow-y-auto">
-              {contexts.map((news) => (
+              {marketContexts.map((market) => (
+                <li key={market.id} className="truncate">
+                  {market.date} 시황
+                </li>
+              ))}
+              {newsContexts.map((news) => (
                 <li key={news.id} className="truncate">
                   {news.title}
                 </li>

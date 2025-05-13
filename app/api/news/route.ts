@@ -72,7 +72,9 @@ export async function POST(req: Request) {
       (item) => item === "News successfully created and embedded."
     ).length;
     const existCount = results.filter(
-      (item) => item === "similar content already exist"
+      (item) =>
+        item === "similar content already exist" ||
+        item === "duplicate date and title"
     ).length;
     // 성공 응답
     return NextResponse.json(

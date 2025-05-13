@@ -9,6 +9,17 @@ export const CreateNews = async (input: NewNewsParams) => {
     const { date, title, link, content, company, keywords } =
       insertNewsSchema.parse(input);
 
+    // Check for existing news with the same date and title
+    const safeDate = date ?? "";
+    const safeTitle = title ?? "";
+    const existing = await db
+      .select()
+      .from(news)
+      .where(and(eq(news.date, safeDate), eq(news.title, safeTitle)));
+    if (existing.length > 0) {
+      return "duplicate date and title";
+    }
+
     const mergedContent = `title:${title}\nlink:${link}\ndate:${date}\n${
       company ? `company name:${company}\n` : ""
     }content:${content}`;

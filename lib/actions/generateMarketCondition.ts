@@ -7,18 +7,30 @@ import { createStreamableValue } from "ai/rsc";
 export async function generateMarketCondition(prompt: string) {
   const stream = createStreamableValue("");
 
-  (async () => {
-    const { textStream } = streamText({
-      model: openai("gpt-4o-mini"),
-      prompt: prompt,
-    });
+  const result = streamText({
+    model: openai("gpt-4o-mini"),
+    prompt: prompt,
+  });
 
-    for await (const delta of textStream) {
+  let usage: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  } | null = null;
+
+  (async () => {
+    for await (const delta of result.textStream) {
       stream.update(delta);
     }
-
     stream.done();
+
+    // 토큰 사용량 정보 얻기
+    usage = await result.usage;
   })();
 
-  return { output: stream.value };
+  // usage는 비동기적으로 할당되므로, stream.value와 함께 Promise로 반환
+  return {
+    output: stream.value,
+    usage: result.usage, // Promise 객체를 직접 반환
+  };
 }
