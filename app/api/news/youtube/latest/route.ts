@@ -9,7 +9,7 @@ export async function GET() {
       .select()
       .from(news)
       .where(eq(news.company, "youtube_futuresnow"))
-      .orderBy(desc(news.date))
+      .orderBy(desc(news.createdAt))
       .limit(1);
     return NextResponse.json(youtubeNews[0].date);
   } catch (error) {

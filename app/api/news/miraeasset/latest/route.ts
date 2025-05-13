@@ -9,7 +9,7 @@ export async function GET() {
       .select()
       .from(news)
       .where(eq(news.company, "miraeasset"))
-      .orderBy(desc(news.date))
+      .orderBy(desc(news.createdAt))
       .limit(1);
     return NextResponse.json(miraeassetNews[0].date);
   } catch (error) {

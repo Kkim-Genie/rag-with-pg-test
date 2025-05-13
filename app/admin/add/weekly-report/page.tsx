@@ -4,7 +4,7 @@ import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import Head from "next/head";
 import { Button } from "@/components/ui/button";
 import { MarketCondition, News } from "@/lib/types";
-import { makeMarketConditionPrompt } from "@/lib/utils";
+import { makeWeeklyReportPrompt } from "@/lib/utils";
 import { generateMarketCondition } from "@/lib/actions/generateMarketCondition";
 import { readStreamableValue } from "ai/rsc";
 import { Loader2 } from "lucide-react";
@@ -126,7 +126,7 @@ export default function AddWeeklyReport() {
   const handleMakeMarketCondition = async () => {
     setIsGenerating(true);
     setFormData((prev) => ({ ...prev, content: "" }));
-    const prompt = makeMarketConditionPrompt(
+    const prompt = makeWeeklyReportPrompt(
       formData.date,
       newsContexts,
       marketContexts
