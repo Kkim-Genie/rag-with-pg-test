@@ -22,10 +22,9 @@ export async function generateMarketCondition(prompt: string) {
     for await (const delta of result.textStream) {
       stream.update(delta);
     }
-    stream.done();
-
     // 토큰 사용량 정보 얻기
     usage = await result.usage;
+    stream.done();
   })();
 
   // usage는 비동기적으로 할당되므로, stream.value와 함께 Promise로 반환
