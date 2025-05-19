@@ -69,14 +69,6 @@ export async function POST(req: Request) {
     const { start_date, end_date, content, market_analysis_ids, news_ids } =
       result.data;
 
-    await CreateWeeklyReport({
-      start_date,
-      end_date,
-      content,
-      market_analysis_ids,
-      news_ids,
-    });
-
     await db
       .delete(embeddings)
       .where(
@@ -91,6 +83,14 @@ export async function POST(req: Request) {
           )
         )
       );
+
+    await CreateWeeklyReport({
+      start_date,
+      end_date,
+      content,
+      market_analysis_ids,
+      news_ids,
+    });
 
     // 성공 응답
     return NextResponse.json(

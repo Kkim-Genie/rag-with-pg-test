@@ -9,11 +9,23 @@ import { generateMarketCondition } from "@/lib/actions/generateMarketCondition";
 import { readStreamableValue } from "ai/rsc";
 import { Loader2 } from "lucide-react";
 
+interface FormData {
+  start_date: string;
+  end_date: string;
+  content: string;
+  market_analysis_ids: string[];
+  news_ids: string[];
+}
+
 export default function AddWeeklyReport() {
-  const [formData, setFormData] = useState({
-    date: "",
+  const [formData, setFormData] = useState<FormData>({
+    start_date: "",
+    end_date: "",
     content: "",
+    market_analysis_ids: [],
+    news_ids: [],
   });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -22,9 +34,9 @@ export default function AddWeeklyReport() {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const fetchContexts = async () => {
-    if (!formData.date) return;
+    if (!formData.end_date) return;
 
-    const selectedDate = new Date(formData.date);
+    const selectedDate = new Date(formData.end_date);
     let datesToFetch: string[] = [];
 
     // 선택된 날짜 포함, 이전 7일(총 8일)
@@ -33,6 +45,7 @@ export default function AddWeeklyReport() {
       d.setDate(selectedDate.getDate() - i);
       datesToFetch.push(d.toISOString().slice(0, 10));
     }
+    setFormData((prev) => ({ ...prev, start_date: datesToFetch[0] }));
 
     // 여러 날짜의 데이터를 병렬로 fetch
     const fetches: Promise<News[]>[] = [];
@@ -62,13 +75,18 @@ export default function AddWeeklyReport() {
 
     const news = await Promise.all(fetches);
     const market = await Promise.all(marketFetches);
+    setFormData((prev) => ({
+      ...prev,
+      news_ids: news.flat().map((news) => news.id),
+      market_analysis_ids: market.flat().map((market) => market.id),
+    }));
     setNewsContexts(news.flat());
     setMarketContexts(market.flat());
   };
 
   useEffect(() => {
     fetchContexts();
-  }, [formData.date]);
+  }, [formData.end_date]);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>
@@ -87,12 +105,12 @@ export default function AddWeeklyReport() {
 
     try {
       // API 요청 보내기
-      const response = await fetch("/api/market-condition", {
+      const response = await fetch("/api/weekly-report", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify([formData]),
+        body: JSON.stringify(formData),
       });
 
       // 응답 처리
@@ -123,11 +141,11 @@ export default function AddWeeklyReport() {
     }
   };
 
-  const handleMakeMarketCondition = async () => {
+  const handleMakeWeeklyReport = async () => {
     setIsGenerating(true);
     setFormData((prev) => ({ ...prev, content: "" }));
     const prompt = makeWeeklyReportPrompt(
-      formData.date,
+      formData.end_date,
       newsContexts,
       marketContexts
     );
@@ -166,7 +184,7 @@ export default function AddWeeklyReport() {
         </div>
       )}
 
-      <Button onClick={handleMakeMarketCondition} disabled={isGenerating}>
+      <Button onClick={handleMakeWeeklyReport} disabled={isGenerating}>
         {isGenerating ? (
           <>
             <Loader2 className="animate-spin mr-2" />
@@ -189,9 +207,9 @@ export default function AddWeeklyReport() {
           </label>
           <input
             type="date"
-            id="date"
-            name="date"
-            value={formData.date}
+            id="end_date"
+            name="end_date"
+            value={formData.end_date}
             onChange={handleChange}
             required
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"

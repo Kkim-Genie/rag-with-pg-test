@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowLeft, Trash, ExternalLink } from "lucide-react";
+import { ArrowLeft, Trash, ExternalLink, Plus } from "lucide-react";
 
 interface WeeklyReport {
   id: string;
@@ -21,6 +21,7 @@ interface WeeklyReport {
   news_ids: string[];
   created_at: Date;
   updated_at: Date;
+  embeded: boolean;
 }
 
 export default function WeeklyReportDetailPage() {
@@ -74,6 +75,18 @@ export default function WeeklyReportDetailPage() {
     }
   };
 
+  const handleEmbedding = async () => {
+    const response = await fetch(`/api/weekly-report/${reportId}/embed`, {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to embed weekly report");
+    }
+
+    fetchWeeklyReport(reportId);
+  };
+
   // 날짜 범위 포맷팅 함수
   const formatDateRange = (startDate: string, endDate: string) => {
     const start = new Date(startDate).toLocaleDateString();
@@ -110,9 +123,16 @@ export default function WeeklyReportDetailPage() {
 
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">주간 보고서 상세 정보</h2>
-        <Button variant="destructive" onClick={handleDelete}>
-          <Trash className="mr-2 h-4 w-4" /> 삭제
-        </Button>
+        <div className="flex gap-2">
+          {!report.embeded && (
+            <Button variant="default" onClick={handleEmbedding}>
+              <Plus className="mr-2 h-4 w-4" /> 임베딩 추가
+            </Button>
+          )}
+          <Button variant="destructive" onClick={handleDelete}>
+            <Trash className="mr-2 h-4 w-4" /> 삭제
+          </Button>
+        </div>
       </div>
 
       <Card>

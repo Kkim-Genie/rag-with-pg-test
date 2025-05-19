@@ -23,15 +23,17 @@ export const CreateWeeklyReport = async (input: NewWeeklyReportParams) => {
       `${start_date}~${end_date} weekly report`
     );
     const embeddings = await generateEmbeddings(mergedContent, false);
-    await db.insert(embeddingsTable).values(
-      embeddings.map((embedding) => ({
-        titleEmbedding: embededTitle[0].embedding,
-        date: start_date,
-        originId: newWeeklyReport.id,
-        originType: "weekly_report",
-        ...embedding,
-      }))
-    );
+
+    const data = embeddings.map((embedding) => ({
+      titleEmbedding: embededTitle[0].embedding,
+      date: start_date,
+      originId: newWeeklyReport.id,
+      originType: "weekly_report",
+      content: embedding.content,
+      embedding: embedding.embedding,
+    }));
+
+    await db.insert(embeddingsTable).values(data).returning();
 
     return "WeeklyReport successfully created and embedded.";
   } catch (error) {

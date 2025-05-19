@@ -25,7 +25,19 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "report not found" }, { status: 404 });
     }
 
-    return NextResponse.json(reports[0]);
+    const report = reports[0];
+
+    const embeded = await db
+      .select()
+      .from(embeddings)
+      .where(
+        and(
+          eq(embeddings.originId, report.id),
+          eq(embeddings.originType, "weekly_report")
+        )
+      );
+
+    return NextResponse.json({ ...report, embeded: embeded.length > 0 });
   } catch (error) {
     console.error("Error fetching news:", error);
     return NextResponse.json(
